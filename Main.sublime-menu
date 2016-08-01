@@ -1,0 +1,12 @@
+[
+    {
+        "id": "tools",
+        "children":
+        [
+            {
+                "caption": "Generate GNUPlot File",
+                "command": "generate_plot_file"
+            }
+        ]
+    }
+]

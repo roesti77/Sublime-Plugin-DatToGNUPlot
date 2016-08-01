@@ -1,0 +1,46 @@
+
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+  <dict>
+    <key>fileTypes</key>
+    <array>
+      <string>dat</string>
+    </array>
+    <key>name</key>
+    <string>GNUPlot Data Files</string>
+    <key>patterns</key>
+    <array>
+     <dict>
+      <key>match</key>
+      <string>(#\s+\w+\s\(index\s\d+\))</string>
+      <key>name</key>
+      <string>keyword.control.dat</string>
+    </dict>
+    <dict>
+      <key>match</key>
+      <string>(^#\s+[\s\d\w:ascii:\(\)]+)</string>
+      <key>name</key>
+      <string>comment</string>
+    </dict>
+    <dict>
+      <key>match</key>
+      <string>(^#\s{1}[\s\d\w:ascii:\(\)]+)</string>
+      <key>name</key>
+      <string>entity.name.tag</string>
+    </dict>
+    <dict>
+      <key>match</key>
+      <string>(^\s+[\s\d\w:ascii:\(\)\.-]+)</string>
+      <key>name</key>
+      <string>constant.numeric</string>
+    </dict>
+  </array>
+  <key>scopeName</key>
+  <string>source.dat</string>
+  <key>scope</key>
+  <string>source.dat</string>
+  <key>uuid</key>
+  <string>5ca8c30e-9bbb-492a-b1a5-91ccb0565c9b</string>
+</dict>
+</plist>
