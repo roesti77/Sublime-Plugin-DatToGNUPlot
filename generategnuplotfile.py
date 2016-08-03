@@ -38,6 +38,8 @@ class GeneratePlotFileCommand(sublime_plugin.WindowCommand):
             dLines = list(lines)
             lines = list(dLines)  # hack to get 2 sets of lines
             dataLines = list(dLine for dLine in dLines if dLine.startswith('\t'))
+            if len(dataLines) is 0:
+                dataLines = list(dLine for dLine in dLines if dLine.startswith(' '))
             # print(dataLines)
             testString = dataLines[0].split()
             if(len(testString) > 2):
@@ -53,6 +55,8 @@ class GeneratePlotFileCommand(sublime_plugin.WindowCommand):
             tmpSet["number"] = -1
             tmpSet["split"] = 0
             tmpSet["id"] = split[3][:-1]
+            if "(inde" in tmpSet["id"]:
+                tmpSet["id"] = split[4][:-1]
             if split[1] in self.sets:
                 self.sets[split[1] + "-" + str(nameDict[split[1]])] = tmpSet
                 nameDict[split[1]] = nameDict[split[1]] + 1
@@ -384,26 +388,29 @@ class GeneratePlotFileCommand(sublime_plugin.WindowCommand):
             else:
                 if i in xlabs:
                     snippet += " using 1:2:xtic(1) "
-            snippet += " index " + str(self.sets[keys[index]]["id"]) + " with linespoints ls 1 title '" + str(keys[index])
+            snippet += " index " + str(self.sets[keys[index]]["id"]) + " with linespoints ls 1"
+            if i is 0:
+                snippet += " title '" + str(keys[index]) + "'"
             if(numPerPlot is 1):
-                snippet += "'\n\n"
+                snippet += "\n\n"
             else:
-                snippet += "', \\\n"
-            for i in range(1, numPerPlot):
+                snippet += ", \\\n"
+            for j in range(1, numPerPlot):
                 snippet += "\t''\t"
                 if(self.labelMode):
                     snippet += " using 1:3:xtic(2) "
                 else:
                     if i in xlabs:
                         snippet += " using 1:2:xtic(1) "
-                snippet += " index " + str(self.sets[keys[index + i]]["id"]) + " with linespoints ls "
-                snippet += str(i + 1) + " title '" + str(keys[index + i])
-                if(i is numPerPlot - 1):
-                    snippet += "'\n\n"
+                snippet += " index " + str(self.sets[keys[index + j]]["id"]) + " with linespoints ls "
+                snippet += str(j + 1)
+                if i is 0:
+                    snippet += " title '" + str(keys[index + j]) + "'"
+                if(j is numPerPlot - 1):
+                    snippet += "\n\n"
                 else:
-                    snippet += "', \\\n"
+                    snippet += ", \\\n"
             index = index + numPerPlot
-
 
         snippet += "unset multiplot\n"
 
