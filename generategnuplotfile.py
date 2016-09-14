@@ -194,6 +194,7 @@ class GeneratePlotFileCommand(sublime_plugin.WindowCommand):
         snippet += "#!/usr/bin/gnuplot\n"
         snippet += "reset\n\n"
         snippet += "set border linewidth 1.5\n\n"
+        snippet += "set encoding utf8\n"
 
         keys = self.getSortetSets()
 
@@ -264,6 +265,7 @@ class GeneratePlotFileCommand(sublime_plugin.WindowCommand):
         snippet += "#!/usr/bin/gnuplot\n"
         snippet += "reset\n\n"
         snippet += "set border linewidth 1.5\n\n"
+        snippet += "set encoding utf8\n"
 
         keys = self.getSortetSets()
         numPerPlot = int(self.callOrder / (self.splits + 1))
