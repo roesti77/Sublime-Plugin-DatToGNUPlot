@@ -13,6 +13,7 @@ class GeneratePlotFileCommand(sublime_plugin.WindowCommand):
     global labelMode
     global initialized
     global splits
+    global csvSet
 
     def run(self):
         self.labelMode = False
@@ -22,9 +23,13 @@ class GeneratePlotFileCommand(sublime_plugin.WindowCommand):
         self.outputName = ""
         self.initialized = False
         self.splits = 0
+        self.csvSet = []
 
         self.fileName = self.window.active_view().file_name()
-        self.getListOfDataSets(self.fileName)
+        if '.csv' in self.fileName:
+            self.getListOfCSVSets(self.fileName)
+        else:
+            self.getListOfDataSets(self.fileName)
 
     def setOutputName(self, input):
         if("." not in input):
@@ -69,6 +74,52 @@ class GeneratePlotFileCommand(sublime_plugin.WindowCommand):
             self.initialized = False
         self.askUser()
         return
+
+    def getListOfCSVSets(self, fileName):
+        with open(fileName) as f:
+            lines = list(line.rstrip() for line in f)
+            data = lines[0].split(',')
+        f.close()
+        self.viewSet[:] = []
+        for cell in data:
+            self.viewSet.append(cell)
+
+        self.window.status_message("X")
+        self.window.show_quick_panel(self.viewSet, self.setX, 1, 0)
+
+    def setX(self, index):
+        if index is len(self.viewSet) - 1:
+            self.initialized = True
+            self.generateOutput(self.csvSet)
+            return
+        self.csvSet.append(index)
+        if "Finish" in self.viewSet:
+            self.viewSet.remove("Finish")
+        self.window.status_message("Y")
+        self.window.show_quick_panel(self.viewSet, self.setY, 1, index + 1)
+
+    def setY(self, index):
+        self.csvSet.append(index)
+        self.viewSet.append("no Label")
+        self.viewSet.append("Finish")
+        self.window.status_message("Label")
+        self.window.show_quick_panel(self.viewSet, self.setLabel, 1, index + 1)
+
+    def setLabel(self, index):
+        if index is len(self.viewSet) - 2:
+            self.csvSet.append(-1)
+            self.window.status_message("X")
+            self.viewSet.remove("no Label")
+            self.window.show_quick_panel(self.viewSet, self.setX, 1, 0)
+        elif index is len(self.viewSet) - 1:
+            self.csvSet.append(-1)
+            self.initialized = True
+            self.generateOutput(self.csvSet)
+        else:
+            self.csvSet.append(index)
+            self.window.status_message("X")
+            self.viewSet.remove("no Label")
+            self.window.show_quick_panel(self.viewSet, self.setX, 1, 0)
 
     def askUser(self):
         if(self.initialized):
@@ -181,10 +232,13 @@ class GeneratePlotFileCommand(sublime_plugin.WindowCommand):
             v.set_syntax_file("gnuplot.tmLanguage")
 
             v.retarget(path.dirname(self.fileName) + "/" + path.basename(self.fileName).split(".")[0] + ".gnuplot")
-            if self.splits is 0:
-                snippet = self.generateGNUSnippet()
+            if '.csv' in self.fileName:
+                snippet = self.generateCSVSnippet()
             else:
-                snippet = self.generateGNUMultiSnippet()
+                if self.splits is 0:
+                    snippet = self.generateGNUSnippet()
+                else:
+                    snippet = self.generateGNUMultiSnippet()
             v.run_command('insert_snippet', {'contents': snippet})
             self.window.active_view().run_command('save')
 
@@ -193,6 +247,8 @@ class GeneratePlotFileCommand(sublime_plugin.WindowCommand):
         snippet += "#!/usr/bin/gnuplot\n"
         snippet += "reset\n\n"
         snippet += "set border linewidth 1.5\n\n"
+
+        snippet += "set encoding utf8\n\n"
 
         keys = self.getSortetSets()
 
@@ -263,6 +319,8 @@ class GeneratePlotFileCommand(sublime_plugin.WindowCommand):
         snippet += "#!/usr/bin/gnuplot\n"
         snippet += "reset\n\n"
         snippet += "set border linewidth 1.5\n\n"
+
+        snippet += "set encoding utf8\n\n"
 
         keys = self.getSortetSets()
         numPerPlot = int(self.callOrder / (self.splits + 1))
@@ -413,5 +471,91 @@ class GeneratePlotFileCommand(sublime_plugin.WindowCommand):
             index = index + numPerPlot
 
         snippet += "unset multiplot\n"
+
+        return snippet
+
+    def generateCSVSnippet(self):
+        snippet = ""
+        snippet += "#!/usr/bin/gnuplot\n"
+        snippet += "reset\n\n"
+        snippet += "set border linewidth 1.5\n\n"
+
+        snippet += "set encoding utf8\n\n"
+
+        colors = []
+
+        size = int(len(self.csvSet)) / int(3)
+
+        colors.extend(self.colorMap(int(size)))
+
+        for i in range(0, int(size)):
+            snippet += "set style line " + str(i + 1)
+            if(i < 12):
+                snippet += " lc rgb '" + str(colors[i]) + "' lt 1 lw 2 pt 7 ps 1.5 "
+            else:
+                snippet += " lc rgb '" + str(colors[i]) + "' lt 1 lw 2 pt 4 ps 1.5 "
+            snippet += "# --- Color " + str(i + 1) + "\n"
+
+        snippet += "set style line " + str(i + 2) + " lc rgb '#000000' lt 2 lw 1 # -- Legend\n\n"
+
+        snippet += "set xlabel '${1:xlabel}'\n"
+        snippet += "set ylabel '${2:ylabel}'\n"
+        snippet += "set title '${3:title}'\n"
+
+        snippet += "set grid\n"
+        self.labelMode = False
+        for i in range(0, len(self.csvSet)):
+            if i % 3 is not 2:
+                continue
+            if self.csvSet[i] is not -1:
+                self.labelMode = True
+
+        if(self.labelMode is False):
+            snippet += "${4:# }set xrange [-1:${5:100}]\n"
+        snippet += "set yrange [0:100]\n\n"
+
+        if(self.labelMode is False):
+            snippet += "${4:# }set xtics   (${6:xachsenbeschriftung})\n"
+        snippet += "set ytics 5\n"
+
+        snippet += "set key right outside top\n"
+        snippet += "set key box linestyle " + str(i + 2) + "\n\n"
+
+        snippet += "set term pngcairo size 1024,768\n"
+        snippet += "set output '${7:" + path.basename(self.fileName).split(".")[0] + "}.png'\n\n"
+        snippet += "plot '" + path.basename(self.fileName) + "'"
+        if(self.labelMode):
+            snippet += " using "
+            snippet += str(self.csvSet[0] + 1) + ":" + str(self.csvSet[1] + 1)
+            snippet += ":xtic(" + str(self.csvSet[2] + 1) + ") "
+        else:
+            snippet += " using "
+            snippet += str(self.csvSet[0] + 1) + ":" + str(self.csvSet[1] + 1) + " "
+        snippet += " with linespoints ls 1 title '" + str(1)
+        if(int(size) is 1):
+            snippet += "'\n\n"
+        else:
+            snippet += "', \\\n"
+            for i in range(1, int(size)):
+                snippet += "\t''\t"
+                if(self.labelMode):
+                    snippet += " using "
+                    print(str(i))
+                    snippet += str(self.csvSet[i * 2] + 1) + ":" + str(self.csvSet[i * 2 + 1] + 1)
+                    snippet += ":xtic(" + str(self.csvSet[i * 2 + 2] + 1) + ") "
+                    print(str(self.csvSet))
+                else:
+                    snippet += " using 1:2:xtic(1) "
+                snippet += " with linespoints ls "
+                snippet += str(i + 1) + " title '" + str(i + 1)
+                if(i is int(size) - 1):
+                    snippet += "'\n\n"
+                else:
+                    snippet += "', \\\n"
+
+        snippet += "set term postscript eps noenhanced color\n"
+        snippet += "set output '${7:" + path.basename(self.fileName).split(".")[0] + "}.eps'\n\n"
+
+        snippet += "replot"
 
         return snippet
