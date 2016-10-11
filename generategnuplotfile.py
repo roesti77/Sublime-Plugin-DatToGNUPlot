@@ -155,9 +155,9 @@ class GeneratePlotFileCommand(sublime_plugin.WindowCommand):
 
         colors[1].extend(['#377eb8'])
         colors[2].extend(['#e41a1c', '#377eb8'])
-        colors[3].extend(['#e41a1c', '#377eb8', '#4daf4a'])
-        colors[4].extend(['#e41a1c', '#377eb8', '#4daf4a', '#984ea3'])
-        colors[5].extend(['#e41a1c', '#377eb8', '#4daf4a', '#984ea3', '#ff7f00'])
+        colors[3].extend(['#e41a1c', '#4daf4a', '#377eb8'])
+        colors[4].extend(['#e41a1c', '#4daf4a', '#377eb8', '#984ea3'])
+        colors[5].extend(['#e41a1c', '#4daf4a', '#377eb8', '#984ea3', '#ff7f00'])
         colors[6].extend(['#1b9e77', '#d95f02', '#7570b3', '#e7298a', '#66a61e', '#e6ab02'])
         colors[7].extend(['#1b9e77', '#d95f02', '#7570b3', '#e7298a', '#66a61e', '#e6ab02', '#a6761d'])
         colors[8].extend(['#1b9e77', '#d95f02', '#7570b3', '#e7298a', '#66a61e', '#e6ab02', '#a6761d', '#666666'])
@@ -255,20 +255,22 @@ class GeneratePlotFileCommand(sublime_plugin.WindowCommand):
                 snippet += " using 3:xtic(2) "
             else:
                 snippet += " using 2:xtic(1) "
+            print(str(self.sets))
             snippet += " index " + str(self.sets[keys[0]]["id"]) + " title '" + str(keys[0]) + "' lc rgb '" + str(colors[0])
             if(len(keys) is 1):
                 snippet += "'\n\n"
             else:
                 snippet += "', \\\n"
-                for i in range(1, self.callOrder):
+                for l in range(1, self.callOrder):
                     snippet += "\t''\t"
                     if(self.labelMode):
                         snippet += " using 3:xtic(2) "
                     else:
                         snippet += " using 2:xtic(1) "
-                    snippet += " index " + str(self.sets[keys[i]]["id"])
-                    snippet += str(i + 1) + " title '" + str(keys[i]) + "' lc rgb '" + str(colors[i])
-                    if(i is self.callOrder - 1):
+                    print(str(l) + str(self.sets[keys[l]]))
+                    snippet += " index " + str(self.sets[keys[l]]["id"])
+                    snippet += " title '" + str(keys[l]) + "' lc rgb '" + str(colors[l])
+                    if(l is self.callOrder - 1):
                         snippet += "'\n\n"
                     else:
                         snippet += "', \\\n"
