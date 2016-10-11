@@ -1,7 +1,7 @@
 {
     "cmd": ["/usr/bin/gnuplot", "$file"],
 		"file_regex": "^[ ]*\"(...*?)\", line ([0-9]*):.*",
-    "selector": "source.gnuplot",
+    "selector": "source.gnu",
     "path": "$file_path",
     "working_dir": "$file_path"
 }

@@ -52,7 +52,6 @@ class GeneratePlotFileCommand(sublime_plugin.WindowCommand):
             dataLines = list(dLine for dLine in dLines if dLine.startswith('\t'))
             if len(dataLines) is 0:
                 dataLines = list(dLine for dLine in dLines if dLine.startswith(' '))
-            # print(dataLines)
             testString = dataLines[0].split()
             if(len(testString) > 2):
                 self.labelMode = True
@@ -75,7 +74,7 @@ class GeneratePlotFileCommand(sublime_plugin.WindowCommand):
             else:
                 self.sets[split[1]] = tmpSet
                 nameDict[split[1]] = 1
-        if(len(self.sets) > 1):
+        if(len(self.sets) > 0):
             self.initialized = True
         else:
             self.initialized = False
@@ -93,6 +92,8 @@ class GeneratePlotFileCommand(sublime_plugin.WindowCommand):
                 self.generateOutput(self.sets)
             else:
                 self.window.show_quick_panel(self.viewSet, self.on_done, 1, 2)
+        else:
+            sublime.error_message("Not Initialized")
 
     def on_done(self, index):
         if index is -1:
@@ -205,6 +206,7 @@ class GeneratePlotFileCommand(sublime_plugin.WindowCommand):
         snippet += "#!/usr/bin/gnuplot\n"
         snippet += "reset\n\n"
         snippet += "set border linewidth 1.5\n\n"
+        snippet += "set encoding utf8\n"
 
         keys = self.getSortetSets()
 
@@ -310,6 +312,7 @@ class GeneratePlotFileCommand(sublime_plugin.WindowCommand):
         snippet += "#!/usr/bin/gnuplot\n"
         snippet += "reset\n\n"
         snippet += "set border linewidth 1.5\n\n"
+        snippet += "set encoding utf8\n"
 
         keys = self.getSortetSets()
         numPerPlot = int(self.callOrder / (self.splits + 1))
