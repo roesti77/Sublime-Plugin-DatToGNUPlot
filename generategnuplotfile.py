@@ -13,6 +13,7 @@ class GeneratePlotFileCommand(sublime_plugin.WindowCommand):
     global labelMode
     global initialized
     global splits
+    global plotType
 
     def run(self):
         self.labelMode = False
@@ -24,6 +25,17 @@ class GeneratePlotFileCommand(sublime_plugin.WindowCommand):
         self.splits = 0
 
         self.fileName = self.window.active_view().file_name()
+        self.viewSet[:] = []
+        self.viewSet.append("Lines")
+        self.viewSet.append("Histogram")
+        self.window.show_quick_panel(self.viewSet, self.setPlotType, 1, 0)
+
+    def setPlotType(self, index):
+        if index is 0:
+            self.plotType = 0
+        else:
+            self.plotType = 1
+        print(str(self.plotType))
         self.getListOfDataSets(self.fileName)
 
     def setOutputName(self, input):
@@ -143,9 +155,9 @@ class GeneratePlotFileCommand(sublime_plugin.WindowCommand):
 
         colors[1].extend(['#377eb8'])
         colors[2].extend(['#e41a1c', '#377eb8'])
-        colors[3].extend(['#e41a1c', '#377eb8', '#4daf4a'])
-        colors[4].extend(['#e41a1c', '#377eb8', '#4daf4a', '#984ea3'])
-        colors[5].extend(['#e41a1c', '#377eb8', '#4daf4a', '#984ea3', '#ff7f00'])
+        colors[3].extend(['#e41a1c', '#4daf4a', '#377eb8'])
+        colors[4].extend(['#e41a1c', '#4daf4a', '#377eb8', '#984ea3'])
+        colors[5].extend(['#e41a1c', '#4daf4a', '#377eb8', '#984ea3', '#ff7f00'])
         colors[6].extend(['#1b9e77', '#d95f02', '#7570b3', '#e7298a', '#66a61e', '#e6ab02'])
         colors[7].extend(['#1b9e77', '#d95f02', '#7570b3', '#e7298a', '#66a61e', '#e6ab02', '#a6761d'])
         colors[8].extend(['#1b9e77', '#d95f02', '#7570b3', '#e7298a', '#66a61e', '#e6ab02', '#a6761d', '#666666'])
@@ -200,13 +212,16 @@ class GeneratePlotFileCommand(sublime_plugin.WindowCommand):
 
         colors.extend(self.colorMap(self.callOrder))
 
-        for i in range(0, self.callOrder):
-            snippet += "set style line " + str(i + 1)
-            if(i < 12):
-                snippet += " lc rgb '" + str(colors[i]) + "' lt 1 lw 2 pt 7 ps 1.5 "
-            else:
-                snippet += " lc rgb '" + str(colors[i]) + "' lt 1 lw 2 pt 4 ps 1.5 "
-            snippet += "# --- " + str(keys[i]) + "\n"
+        if self.plotType is 0:
+            for i in range(0, self.callOrder):
+                    snippet += "set style line " + str(i + 1)
+                    if(i < 12):
+                        snippet += " lc rgb '" + str(colors[i]) + "' lt 1 lw 2 pt 7 ps 1.5 "
+                    else:
+                        snippet += " lc rgb '" + str(colors[i]) + "' lt 1 lw 2 pt 4 ps 1.5 "
+                    snippet += "# --- " + str(keys[i]) + "\n"
+        else:
+            i = self.callOrder
 
         snippet += "set style line " + str(i + 2) + " lc rgb '#000000' lt 2 lw 1 # -- Legend\n\n"
 
@@ -226,30 +241,62 @@ class GeneratePlotFileCommand(sublime_plugin.WindowCommand):
         snippet += "set key right outside top\n"
         snippet += "set key box linestyle " + str(i + 2) + "\n\n"
 
+        if self.plotType is 1:
+            snippet += "set style data histogram\n"
+            snippet += "set style histogram cluster gap 5\n"
+            snippet += "set style fill solid border -1\n"
+            snippet += "set boxwidth 1\n\n"
+
         snippet += "set term pngcairo size 1024,768\n"
         snippet += "set output '${7:" + path.basename(self.fileName).split(".")[0] + "}.png'\n\n"
         snippet += "plot '" + path.basename(self.fileName) + "'"
-        if(self.labelMode):
-            snippet += " using 1:3:xtic(2) "
+        if self.plotType is 1:
+            if(self.labelMode):
+                snippet += " using 3:xtic(2) "
+            else:
+                snippet += " using 2:xtic(1) "
+            print(str(self.sets))
+            snippet += " index " + str(self.sets[keys[0]]["id"]) + " title '" + str(keys[0]) + "' lc rgb '" + str(colors[0])
+            if(len(keys) is 1):
+                snippet += "'\n\n"
+            else:
+                snippet += "', \\\n"
+                for l in range(1, self.callOrder):
+                    snippet += "\t''\t"
+                    if(self.labelMode):
+                        snippet += " using 3:xtic(2) "
+                    else:
+                        snippet += " using 2:xtic(1) "
+                    print(str(l) + str(self.sets[keys[l]]))
+                    snippet += " index " + str(self.sets[keys[l]]["id"])
+                    snippet += " title '" + str(keys[l]) + "' lc rgb '" + str(colors[l])
+                    if(l is self.callOrder - 1):
+                        snippet += "'\n\n"
+                    else:
+                        snippet += "', \\\n"
+
         else:
-            snippet += " using 1:2:xtic(1) "
-        snippet += " index " + str(self.sets[keys[0]]["id"]) + " with linespoints ls 1 title '" + str(keys[0])
-        if(len(keys) is 1):
-            snippet += "'\n\n"
-        else:
-            snippet += "', \\\n"
-            for i in range(1, self.callOrder):
-                snippet += "\t''\t"
-                if(self.labelMode):
-                    snippet += " using 1:3:xtic(2) "
-                else:
-                    snippet += " using 1:2:xtic(1) "
-                snippet += " index " + str(self.sets[keys[i]]["id"]) + " with linespoints ls "
-                snippet += str(i + 1) + " title '" + str(keys[i])
-                if(i is self.callOrder - 1):
-                    snippet += "'\n\n"
-                else:
-                    snippet += "', \\\n"
+            if(self.labelMode):
+                snippet += " using 1:3:xtic(2) "
+            else:
+                snippet += " using 1:2:xtic(1) "
+            snippet += " index " + str(self.sets[keys[0]]["id"]) + " with linespoints ls 1 title '" + str(keys[0])
+            if(len(keys) is 1):
+                snippet += "'\n\n"
+            else:
+                snippet += "', \\\n"
+                for i in range(1, self.callOrder):
+                    snippet += "\t''\t"
+                    if(self.labelMode):
+                        snippet += " using 1:3:xtic(2) "
+                    else:
+                        snippet += " using 1:2:xtic(1) "
+                    snippet += " index " + str(self.sets[keys[i]]["id"]) + " with linespoints ls "
+                    snippet += str(i + 1) + " title '" + str(keys[i])
+                    if(i is self.callOrder - 1):
+                        snippet += "'\n\n"
+                    else:
+                        snippet += "', \\\n"
 
         snippet += "set term postscript eps noenhanced color\n"
         snippet += "set output '${7:" + path.basename(self.fileName).split(".")[0] + "}.eps'\n\n"
