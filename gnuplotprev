@@ -1,0 +1,13 @@
+#!/bin/sh
+/usr/bin/gnuplot $1
+if [ $? -eq 0 ];
+    then
+    base="${1%.*}.png"
+    if [ -a $base ];
+      then
+      /usr/bin/eog --single-window $base > /dev/null 2>&1
+    elif [ -a "${base%.*}.eps" ];
+      then
+      /usr/bin/okular --unique "${base%.*}.eps" > /dev/null 2>&1
+    fi
+fi

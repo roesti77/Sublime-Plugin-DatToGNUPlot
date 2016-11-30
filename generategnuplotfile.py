@@ -257,8 +257,10 @@ class GeneratePlotFileCommand(sublime_plugin.WindowCommand):
                 snippet += " using 3:xtic(2) "
             else:
                 snippet += " using 2:xtic(1) "
-            print(str(self.sets))
-            snippet += " index " + str(self.sets[keys[0]]["id"]) + " title '" + str(keys[0]) + "' lc rgb '" + str(colors[0])
+
+            snippet += " index " + str(self.sets[keys[0]]["id"])
+            snippet += " title '" + str(keys[0]) + "' lc rgb '" + str(colors[0])
+
             if(len(keys) is 1):
                 snippet += "'\n\n"
             else:
@@ -269,7 +271,7 @@ class GeneratePlotFileCommand(sublime_plugin.WindowCommand):
                         snippet += " using 3:xtic(2) "
                     else:
                         snippet += " using 2:xtic(1) "
-                    print(str(l) + str(self.sets[keys[l]]))
+
                     snippet += " index " + str(self.sets[keys[l]]["id"])
                     snippet += " title '" + str(keys[l]) + "' lc rgb '" + str(colors[l])
                     if(l is self.callOrder - 1):
